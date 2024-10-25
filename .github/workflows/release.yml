@@ -20,9 +20,14 @@ jobs:
       with:
         targets: ${{ matrix.target }}
 
-    # - name: Get the release version from the tag
-    #   shell: bash
-    #   run: echo "VERSION=build" >> $GITHUB_ENV
+    - name: Generate release tag
+      id: generate_release_tag
+      uses: amitsingh-007/next-release-tag@v6.0.0
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        tag_prefix: 'v'
+        tag_template: 'i-yyyy.mm.dd'
+
 
     - name: Build
       uses: actions-rs/cargo@v1
@@ -55,7 +60,9 @@ jobs:
     - name: Upload the binaries
       uses: softprops/action-gh-release@v1
       with:
-        tag_name: build
+        name: Release ${{ steps.generate_release_tag.outputs.next_release_tag }}
+        tag_name: ${{ steps.generate_release_tag.outputs.next_release_tag }}
+        token: ${{secrets.GITHUB_TOKEN}}
         files: |
           ${{ env.ASSET }}
 

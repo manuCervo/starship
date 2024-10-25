@@ -1,9 +1,6 @@
 name: Release
 
-on:
-  push:
-    tags:
-    - "*"
+on: workflow_dispatch 
 jobs:
   build-and-upload:
     name: Build and upload
@@ -25,7 +22,7 @@ jobs:
 
     - name: Get the release version from the tag
       shell: bash
-      run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+      run: echo "VERSION=build" >> $GITHUB_ENV
 
     - name: Build
       uses: actions-rs/cargo@v1

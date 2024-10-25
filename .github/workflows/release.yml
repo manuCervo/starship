@@ -1,32 +1,66 @@
 name: Release
 
-permissions:
-  contents: write
-
 on:
   push:
     tags:
-      - '*'
-
+    - "*"
 jobs:
-  create-release:
-    runs-on: ubuntu-latest
+  build-and-upload:
+    name: Build and upload
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - build: windows-gnu
+            os: windows-latest
+            target: x86_64-pc-windows-gnu
     steps:
-      - uses: actions/checkout@v4
-      - uses: taiki-e/create-gh-release-action@v1
-        with:
-          # (required) GitHub token for creating GitHub Releases.
-          token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Clone repository
+      uses: actions/checkout@v3
+      
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: ${{ matrix.target }}
 
-  upload-assets:
-    needs: create-release
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: taiki-e/upload-rust-binary-action@v1
-        with:
-          # (required) Comma-separated list of binary names (non-extension portion of filename) to build and upload.
-          # Note that glob pattern is not supported yet.
-          bin: starship
-          # (required) GitHub token for uploading assets to GitHub Releases.
-          token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Get the release version from the tag
+      shell: bash
+      run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+    - name: Build
+      uses: actions-rs/cargo@v1
+      with:
+        use-cross: true
+        command: build
+        args: --verbose --release --target ${{ matrix.target }}
+
+
+    - name: Build archive
+      shell: bash
+      run: |
+        # Replace with the name of your binary
+        binary_name="<BINARY_NAME>"
+    
+        dirname="$binary_name-${{ env.VERSION }}-${{ matrix.target }}"
+        mkdir "$dirname"
+        if [ "${{ matrix.os }}" = "windows-latest" ]; then
+          mv "target/${{ matrix.target }}/release/$binary_name.exe" "$dirname"
+        else
+          mv "target/${{ matrix.target }}/release/$binary_name" "$dirname"
+        fi
+    
+        if [ "${{ matrix.os }}" = "windows-latest" ]; then
+          7z a "$dirname.zip" "$dirname"
+          echo "ASSET=$dirname.zip" >> $GITHUB_ENV
+        else
+          tar -czf "$dirname.tar.gz" "$dirname"
+          echo "ASSET=$dirname.tar.gz" >> $GITHUB_ENV
+        fi
+    - name: Upload the binaries
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          ${{ env.ASSET }}
+
+
+        

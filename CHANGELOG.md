@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.22.1](https://github.com/manuCervo/starship/compare/v1.22.0...v1.22.1) (2024-10-25)
+
+
+### Bug Fixes
+
+* idk ([c6c0fba](https://github.com/manuCervo/starship/commit/c6c0fba6a13c58f12a99c7b9232b6f2046bc01d6))
+
 ## [1.22.0](https://github.com/manuCervo/starship/compare/v1.21.1...v1.22.0) (2024-10-25)
 
 
